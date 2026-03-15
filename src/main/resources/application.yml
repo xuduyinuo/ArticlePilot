@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: ArticlePilot
+  # MySQL ?????
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/article_pilot
+    username: root
+    password: 12345678
+  # session ??
+  session:
+    store-type: redis
+    # session 30 ???
+    timeout: 2592000
+  # Redis ??
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      password:
+
+# mybatis-plus ??
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # ????????????
+      logic-delete-value: 1 # ?????????? 1?
+      logic-not-delete-value: 0 # ?????????? 0?
+
+server:
+  port: 8102
+  servlet:
+    context-path: /api
+    # cookie 30 ???
+    session:
+      cookie:
+        max-age: 2592000
+
+# springdoc-openapi ??
+springdoc:
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.xudu.articlepilot.controller
+# knife4j ??????
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
