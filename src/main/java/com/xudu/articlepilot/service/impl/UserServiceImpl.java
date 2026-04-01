@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.xudu.articlepilot.constant.UserConstant.DEFAULT_QUOTA;
 import static com.xudu.articlepilot.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -65,7 +66,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserPassword(encryptPassword);
         user.setUserName("无名");
         user.setUserRole(UserRoleEnum.USER.getValue());
-        //user.setQuota(DEFAULT_QUOTA);
+        user.setQuota(DEFAULT_QUOTA);
         boolean saveResult = this.save(user);
         if (!saveResult) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "注册失败，数据库错误");

@@ -1,18 +1,20 @@
 spring:
   application:
     name: ArticlePilot
-  # MySQL ?????
+  profiles:
+    active: local
+  # MySQL 配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/article_pilot
     username: root
     password: 12345678
-  # session ??
+  # session
   session:
     store-type: redis
-    # session 30 ???
+    # session 30 天过期
     timeout: 2592000
-  # Redis ??
+  # Redis 配置
   data:
     redis:
       host: localhost
@@ -20,33 +22,33 @@ spring:
       database: 0
       password:
 
-# mybatis-plus ??
+# mybatis-plus 配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
-      logic-delete-field: isDelete # ????????????
-      logic-delete-value: 1 # ?????????? 1?
-      logic-not-delete-value: 0 # ?????????? 0?
+      logic-delete-field: isDelete # 逻辑删除
+      logic-delete-value: 1 # 删除 1
+      logic-not-delete-value: 0 # 未删除 0
 
 server:
   port: 8102
   servlet:
     context-path: /api
-    # cookie 30 ???
+    # cookie 30 天
     session:
       cookie:
         max-age: 2592000
 
-# springdoc-openapi ??
+# springdoc-openapi 配置文档
 springdoc:
   group-configs:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.xudu.articlepilot.controller
-# knife4j ??????
+# knife4j 配置文档
 knife4j:
   enable: true
   setting:

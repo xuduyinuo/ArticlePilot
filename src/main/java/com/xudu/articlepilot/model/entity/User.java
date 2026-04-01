@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
+import com.xudu.articlepilot.common.PageRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -65,22 +67,27 @@ public class User implements Serializable {
     private String userRole;
 
     /**
+     * 剩余配额
+     */
+    private Integer quota;
+
+    /**
      * 编辑时间
      */
     @TableField(value = "editTime")
-    private Date editTime;
+    private LocalDateTime editTime;
 
     /**
      * 创建时间
      */
     @TableField(value = "createTime")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
     @TableField(value = "updateTime")
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 是否删除
