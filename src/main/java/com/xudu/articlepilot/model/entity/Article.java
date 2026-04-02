@@ -4,14 +4,13 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-import com.xudu.articlepilot.common.PageRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 文章表
@@ -46,6 +45,11 @@ public class Article implements Serializable {
      */
     @TableField(value = "topic")
     private String topic;
+
+    /**
+     * 文章风格：tech/emotional/educational/humorous，可为空
+     */
+    private String style;
 
     /**
      * 主标题

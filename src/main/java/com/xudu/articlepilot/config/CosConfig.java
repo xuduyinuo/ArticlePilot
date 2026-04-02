@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 腾讯云 COS 配置
  *
- * @author <a href="https://codefather.cn">编程导航学习圈</a>
  */
 @Configuration
 @ConfigurationProperties(prefix = "tencent.cos")

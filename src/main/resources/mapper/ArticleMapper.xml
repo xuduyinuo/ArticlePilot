@@ -9,6 +9,7 @@
             <result property="taskId" column="taskId" />
             <result property="userId" column="userId" />
             <result property="topic" column="topic" />
+            <result property="style" column="style" />
             <result property="mainTitle" column="mainTitle" />
             <result property="subTitle" column="subTitle" />
             <result property="outline" column="outline" />

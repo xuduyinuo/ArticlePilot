@@ -1,28 +1,24 @@
 package com.xudu.articlepilot.controller;
 
-import cn.hutool.core.util.IdUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xudu.articlepilot.annotation.AuthCheck;
 import com.xudu.articlepilot.common.BaseResponse;
 import com.xudu.articlepilot.common.DeleteRequest;
 import com.xudu.articlepilot.common.ResultUtils;
-import com.xudu.articlepilot.exception.BusinessException;
 import com.xudu.articlepilot.exception.ErrorCode;
 import com.xudu.articlepilot.exception.ThrowUtils;
 import com.xudu.articlepilot.manager.SseEmitterManager;
 import com.xudu.articlepilot.mapper.ArticleMapper;
 import com.xudu.articlepilot.model.dto.article.ArticleCreateRequest;
 import com.xudu.articlepilot.model.dto.article.ArticleQueryRequest;
-import com.xudu.articlepilot.model.entity.Article;
 import com.xudu.articlepilot.model.entity.User;
+import com.xudu.articlepilot.model.enums.ArticleStyleEnum;
 import com.xudu.articlepilot.model.vo.ArticleVO;
 import com.xudu.articlepilot.service.ArticleAsyncService;
 import com.xudu.articlepilot.service.ArticleService;
 import com.xudu.articlepilot.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/article")
@@ -68,26 +62,23 @@ public class ArticleController {
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(request.getTopic() == null || request.getTopic().trim().isEmpty(), 
                 ErrorCode.PARAMS_ERROR, "选题不能为空");
+        // 校验风格参数（允许为空）
+        ThrowUtils.throwIf(!ArticleStyleEnum.isValid(request.getStyle()),
+                ErrorCode.PARAMS_ERROR, "无效的文章风格");
 
         User loginUser = userService.getLoginUser(httpServletRequest);
 
-        // 生成任务ID
-        String taskId = IdUtil.simpleUUID();
+        // 检查并消耗配额 + 创建文章任务（在同一事务中）
+        String taskId = articleService.createArticleTaskWithQuotaCheck(request.getTopic(), request.getStyle(), loginUser);
 
-        // 创建文章记录
-        Article article = new Article();
-        article.setTaskId(taskId);
-        article.setUserId(loginUser.getId());
-        article.setTopic(request.getTopic());
-        article.setStatus("PENDING");
-        article.setCreateTime(LocalDateTime.now());
-        
-        articleMapper.insert(article);
+        // 异步执行文章生成（传递风格和配图方式选择）
+        articleAsyncService.executeArticleGeneration(
+                taskId,
+                request.getTopic(),
+                request.getStyle(),
+                request.getEnabledImageMethods()
+        );
 
-        // 异步执行文章生成
-        articleAsyncService.executeArticleGeneration(taskId, request.getTopic());
-
-        log.info("文章任务已创建, taskId={}, userId={}", taskId, loginUser.getId());
         return ResultUtils.success(taskId);
     }
 
