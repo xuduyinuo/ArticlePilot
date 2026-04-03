@@ -70,6 +70,11 @@ public class User implements Serializable {
     private Integer quota;
 
     /**
+     * 成为会员时间
+     */
+    private LocalDateTime vipTime;
+
+    /**
      * 编辑时间
      */
     @TableField(value = "editTime")

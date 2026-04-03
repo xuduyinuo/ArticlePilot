@@ -16,6 +16,7 @@ import com.xudu.articlepilot.model.entity.Article;
 import com.xudu.articlepilot.model.entity.User;
 import com.xudu.articlepilot.model.enums.ArticlePhaseEnum;
 import com.xudu.articlepilot.model.enums.ArticleStatusEnum;
+import com.xudu.articlepilot.model.enums.ImageMethodEnum;
 import com.xudu.articlepilot.model.vo.ArticleVO;
 import com.xudu.articlepilot.service.ArticleAgentService;
 import com.xudu.articlepilot.service.ArticleService;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.xudu.articlepilot.constant.UserConstant.ADMIN_ROLE;
+import static com.xudu.articlepilot.constant.UserConstant.VIP_ROLE;
 
 /**
 * @author xudu
@@ -49,6 +51,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
 
     @Override
     public String createArticleTask(String topic, String style, List<String> enabledImageMethods, User loginUser) {
+
+        // 处理配图方式：如果用户未选择，给普通用户设置默认的非 VIP 方式
+        List<String> finalImageMethods = processImageMethods(enabledImageMethods, loginUser);
+
+        // 校验配图方式权限（普通用户不能使用 NANO_BANANA 和 SVG_DIAGRAM）
+        validateImageMethods(finalImageMethods, loginUser);
+
         String taskId = IdUtil.simpleUUID();
 
         // 创建文章记录
@@ -57,7 +66,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         article.setUserId(loginUser.getId());
         article.setTopic(topic);
         article.setStyle(style);
-        article.setEnabledImageMethods(enabledImageMethods != null && !enabledImageMethods.isEmpty() ? GsonUtils.toJson(enabledImageMethods) : null);
+        article.setEnabledImageMethods(finalImageMethods != null && !finalImageMethods.isEmpty()
+                ? GsonUtils.toJson(finalImageMethods) : null);
         article.setStatus(ArticleStatusEnum.PENDING.getValue());
         article.setPhase(ArticlePhaseEnum.PENDING.getValue());
         article.setCreateTime(LocalDateTime.now());
@@ -294,6 +304,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         // 校验权限
         checkArticlePermission(article, loginUser);
 
+        // 校验 VIP 权限（普通用户不能使用 AI 修改大纲）
+        ThrowUtils.throwIf(!isVipOrAdmin(loginUser), ErrorCode.NO_AUTH_ERROR,
+                "AI 修改大纲功能仅限 VIP 会员使用");
+
         // 校验当前阶段（必须是 OUTLINE_EDITING）
         ArticlePhaseEnum currentPhase = ArticlePhaseEnum.getByValue(article.getPhase());
         ThrowUtils.throwIf(currentPhase != ArticlePhaseEnum.OUTLINE_EDITING,
@@ -319,6 +333,63 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
 
         log.info("AI修改大纲完成, taskId={}, sectionsCount={}", taskId, modifiedOutline.size());
         return modifiedOutline;
+    }
+
+    /**
+     * 处理配图方式
+     * 如果用户未选择，给普通用户设置默认的非 VIP 方式，VIP 用户不限制
+     */
+    private List<String> processImageMethods(List<String> enabledImageMethods, User loginUser) {
+        // 如果用户已选择，直接返回
+        if (enabledImageMethods != null && !enabledImageMethods.isEmpty()) {
+            return enabledImageMethods;
+        }
+
+        // VIP 和管理员：不限制，返回 null 表示支持所有方式
+        if (isVipOrAdmin(loginUser)) {
+            return null;
+        }
+
+        // 普通用户：返回默认的非 VIP 方式
+        return List.of(
+                ImageMethodEnum.PEXELS.getValue(),
+                ImageMethodEnum.MERMAID.getValue(),
+                ImageMethodEnum.ICONIFY.getValue(),
+                ImageMethodEnum.EMOJI_PACK.getValue()
+        );
+    }
+
+
+    /**
+     * 校验配图方式权限
+     * 普通用户不能使用 NANO_BANANA 和 SVG_DIAGRAM
+     */
+    private void validateImageMethods(List<String> enabledImageMethods, User loginUser) {
+        if (enabledImageMethods == null || enabledImageMethods.isEmpty()) {
+            return;
+        }
+
+        // VIP 和管理员无限制
+        if (isVipOrAdmin(loginUser)) {
+            return;
+        }
+
+        // 普通用户限制
+        for (String method : enabledImageMethods) {
+            if (ImageMethodEnum.NANO_BANANA.getValue().equals(method) ||
+                    ImageMethodEnum.SVG_DIAGRAM.getValue().equals(method)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,
+                        "高级配图功能（AI 生图、SVG 图表）仅限 VIP 会员使用");
+            }
+        }
+    }
+
+    /**
+     * 判断是否为 VIP 或管理员
+     */
+    private boolean isVipOrAdmin(User user) {
+        return ADMIN_ROLE.equals(user.getUserRole()) ||
+                VIP_ROLE.equals(user.getUserRole());
     }
 
 }

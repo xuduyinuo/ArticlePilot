@@ -23,5 +23,10 @@ public interface UserConstant {
      */
     int DEFAULT_QUOTA = 5;
 
+    /**
+     * VIP 角色
+     */
+    String VIP_ROLE = "vip";
+
     // endregion
 }
